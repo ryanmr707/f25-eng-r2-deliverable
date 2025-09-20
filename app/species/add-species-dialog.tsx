@@ -42,7 +42,7 @@ export default function AddSpeciesDialog({ userId }: { userId: string }) {
       {
         author: userId,
         scientific_name: input.scientific_name,
-        kingdom: input.kingdom as Database["public"]["Enums"]["kingdom"],
+        kingdom: input.kingdom!,
         common_name: input.common_name ?? null,
         description: input.description ?? null,
         total_population: input.total_population ?? null,
@@ -123,7 +123,7 @@ export default function AddSpeciesDialog({ userId }: { userId: string }) {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Kingdom</FormLabel>
-                    <Select onValueChange={(v) => field.onChange(kingdoms.parse(v))} value={field.value!}>
+                    <Select onValueChange={(v) => field.onChange(kingdoms.parse(v))} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select a kingdom" />
