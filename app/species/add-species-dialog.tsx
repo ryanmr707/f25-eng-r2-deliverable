@@ -123,7 +123,7 @@ export default function AddSpeciesDialog({ userId }: { userId: string }) {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Kingdom</FormLabel>
-                    <Select onValueChange={(v) => field.onChange(kingdoms.parse(v))} value={field.value}>
+                    <Select onValueChange={(v) => field.onChange(kingdoms.parse(v))} value={field.value!}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select a kingdom" />

@@ -31,7 +31,7 @@ export default function SpeciesDetailsDialog({ species }: { species: Species }) 
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-[640px]">
         <DialogHeader>
           <DialogTitle className="flex flex-col gap-1">
-            <span className="text-xl">{species.scientific_name || "N/A"}</span>
+            <span className="text-xl">{species.scientific_name ?? "N/A"}</span>
             {species.common_name ? (
               <span className="text-base font-normal italic text-muted-foreground">{species.common_name}</span>
             ) : null}
@@ -44,7 +44,7 @@ export default function SpeciesDetailsDialog({ species }: { species: Species }) 
             <div className="relative h-56 w-full">
               <Image
                 src={species.image}
-                alt={species.scientific_name || "Species image"}
+                alt={species.scientific_name ?? "Species image"}
                 fill
                 className="rounded-md object-cover"
               />
@@ -54,15 +54,15 @@ export default function SpeciesDetailsDialog({ species }: { species: Species }) 
           <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
               <dt className="text-sm text-muted-foreground">Scientific name</dt>
-              <dd className="font-medium">{species.scientific_name || "N/A"}</dd>
+              <dd className="font-medium">{species.scientific_name ?? "N/A"}</dd>
             </div>
             <div>
               <dt className="text-sm text-muted-foreground">Common name</dt>
-              <dd className="font-medium">{species.common_name || "N/A"}</dd>
+              <dd className="font-medium">{species.common_name ?? "N/A"}</dd>
             </div>
             <div>
               <dt className="text-sm text-muted-foreground">Kingdom</dt>
-              <dd className="font-medium">{species.kingdom || "N/A"}</dd>
+              <dd className="font-medium">{species.kingdom ?? "N/A"}</dd>
             </div>
             <div>
               <dt className="text-sm text-muted-foreground">Total population</dt>
