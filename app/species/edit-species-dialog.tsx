@@ -1,6 +1,10 @@
 "use client";
 
-import { Icons } from "@/components/icons";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useRouter } from "next/navigation";
+import { useState, type BaseSyntheticEvent } from "react";
+import { useForm } from "react-hook-form";
+
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -18,37 +22,43 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/components/ui/use-toast";
 import { createBrowserSupabaseClient } from "@/lib/client-utils";
 import type { Database } from "@/lib/schema";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useRouter } from "next/navigation";
-import { useState, type BaseSyntheticEvent } from "react";
-import { useForm } from "react-hook-form";
 
-// ✅ NEW: import shared Zod schema + options + types
-import { defaultValues, kingdomOptions, kingdoms, speciesSchema, type FormData } from "./species-form";
+import { kingdomOptions, kingdoms, speciesSchema, type FormData } from "./species-form";
 
-export default function AddSpeciesDialog({ userId }: { userId: string }) {
+type Species = Database["public"]["Tables"]["species"]["Row"];
+
+export default function EditSpeciesDialog({ species, userId }: { species: Species; userId: string | null }) {
   const router = useRouter();
-  const [open, setOpen] = useState<boolean>(false);
+  const [open, setOpen] = useState(false);
+
+  const isAuthor = !!userId && userId === species.author;
 
   const form = useForm<FormData>({
     resolver: zodResolver(speciesSchema),
-    defaultValues,
+    defaultValues: {
+      scientific_name: species.scientific_name ?? "",
+      common_name: species.common_name ?? "",
+      kingdom: (species.kingdom as typeof kingdoms._type) ?? undefined, // TS-only cast; fine at runtime
+      total_population: species.total_population ?? undefined,
+      image: species.image ?? "",
+      description: species.description ?? "",
+    },
     mode: "onChange",
   });
 
   const onSubmit = async (input: FormData) => {
     const supabase = createBrowserSupabaseClient();
-    const { error } = await supabase.from("species").insert([
-      {
-        author: userId,
+    const { error } = await supabase
+      .from("species")
+      .update({
         scientific_name: input.scientific_name,
-        kingdom: input.kingdom as Database["public"]["Enums"]["kingdom"],
-        common_name: input.common_name ?? null,
-        description: input.description ?? null,
-        total_population: input.total_population ?? null,
-        image: input.image ?? null,
-      } satisfies Database["public"]["Tables"]["species"]["Insert"],
-    ]);
+        common_name: input.common_name,
+        kingdom: input.kingdom,
+        total_population: input.total_population,
+        image: input.image,
+        description: input.description,
+      })
+      .eq("id", species.id);
 
     if (error) {
       return toast({
@@ -58,31 +68,28 @@ export default function AddSpeciesDialog({ userId }: { userId: string }) {
       });
     }
 
-    form.reset(defaultValues);
     setOpen(false);
+    form.reset(input);
     router.refresh();
-
-    return toast({
-      title: "New species added!",
-      description: "Successfully added " + input.scientific_name + ".",
-    });
+    return toast({ title: "Species updated successfully!" });
   };
+
+  if (!isAuthor) return null;
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="secondary">
-          <Icons.add className="mr-3 h-5 w-5" />
-          Add Species
+        <Button className="mt-2 w-full" variant="outline">
+          Edit
         </Button>
       </DialogTrigger>
+
       <DialogContent className="max-h-screen overflow-y-auto sm:max-w-[600px]">
         <DialogHeader>
-          <DialogTitle>Add Species</DialogTitle>
-          <DialogDescription>
-            Add a new species here. Click &quot;Add Species&quot; below when you&apos;re done.
-          </DialogDescription>
+          <DialogTitle>Edit Species</DialogTitle>
+          <DialogDescription>Update the fields and click “Save changes”.</DialogDescription>
         </DialogHeader>
+
         <Form {...form}>
           <form onSubmit={(e: BaseSyntheticEvent) => void form.handleSubmit(onSubmit)(e)}>
             <div className="grid w-full items-center gap-4">
@@ -131,6 +138,7 @@ export default function AddSpeciesDialog({ userId }: { userId: string }) {
                       </FormControl>
                       <SelectContent>
                         <SelectGroup>
+                          {/* ⬇️ CHANGED: render from a plain array to avoid runtime crash */}
                           {kingdomOptions.map((k) => (
                             <SelectItem key={k} value={k}>
                               {k}
@@ -158,6 +166,7 @@ export default function AddSpeciesDialog({ userId }: { userId: string }) {
                           value={value ?? ""}
                           placeholder="300000"
                           {...rest}
+                          /* ⬇️ CHANGED: let blank be "" so Zod transforms it */
                           onChange={(e) => field.onChange(e.target.value === "" ? "" : +e.target.value)}
                         />
                       </FormControl>
@@ -176,11 +185,7 @@ export default function AddSpeciesDialog({ userId }: { userId: string }) {
                     <FormItem>
                       <FormLabel>Image URL</FormLabel>
                       <FormControl>
-                        <Input
-                          value={value ?? ""}
-                          placeholder="https://upload.wikimedia.org/wikipedia/commons/thumb/3/30/George_the_amazing_guinea_pig.jpg/440px-George_the_amazing_guinea_pig.jpg"
-                          {...rest}
-                        />
+                        <Input value={value ?? ""} placeholder="https://example.com/image.jpg" {...rest} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -197,7 +202,12 @@ export default function AddSpeciesDialog({ userId }: { userId: string }) {
                     <FormItem>
                       <FormLabel>Description</FormLabel>
                       <FormControl>
-                        <Textarea value={value ?? ""} placeholder="The guinea pig or domestic guinea pig…" {...rest} />
+                        <Textarea
+                          value={value ?? ""}
+                          placeholder="A short description of the species…"
+                          className="resize-none"
+                          {...rest}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -207,7 +217,7 @@ export default function AddSpeciesDialog({ userId }: { userId: string }) {
 
               <div className="flex">
                 <Button type="submit" className="ml-1 mr-1 flex-auto">
-                  Add Species
+                  Save changes
                 </Button>
                 <DialogClose asChild>
                   <Button type="button" className="ml-1 mr-1 flex-auto" variant="secondary">

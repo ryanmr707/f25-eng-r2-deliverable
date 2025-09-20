@@ -12,6 +12,9 @@ import { useState, type BaseSyntheticEvent } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
+console.log("SUPABASE_URL", process.env.NEXT_PUBLIC_SUPABASE_URL);
+console.log("SUPABASE_KEY_PRESENT", !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
+
 // Template: https://github.com/shadcn/taxonomy/blob/main/components/user-auth-form.tsx
 
 // Create Zod object schema with validations
@@ -52,7 +55,7 @@ export default function UserAuthForm({ className, ...props }: React.HTMLAttribut
 
     if (error) {
       return toast({
-        title: "Something went wrong.",
+        title: "Something went wrong.Jimmy",
         description: error.message,
         variant: "destructive",
       });
